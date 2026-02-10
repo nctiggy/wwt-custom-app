@@ -16,7 +16,8 @@
   <!-- Header -->
   <div class="header">
     <div class="header-left">
-      <div class="logo">WWT <span class="logo-accent">Gas</span></div>
+      <img src="/images/logo.png" class="logo-mark" alt="WWT">
+      <span class="logo-text">Gas</span>
       <div class="header-divider"></div>
       <div class="header-subtitle">Smart Station Manager</div>
     </div>
@@ -144,10 +145,10 @@
   const CRITICAL_THRESHOLD = 420; // 7 min
 
   // Simulation config
-  const SIM_ARRIVAL_MIN = 8000;   // 8s min between arrivals
-  const SIM_ARRIVAL_MAX = 20000;  // 20s max
-  const SIM_PUMP_MIN = 40000;     // 40s min pump time (accelerated for demo)
-  const SIM_PUMP_MAX = 90000;     // 90s max pump time
+  const SIM_ARRIVAL_MIN = 3000;   // 3s min between arrivals (fast for demo)
+  const SIM_ARRIVAL_MAX = 8000;   // 8s max
+  const SIM_PUMP_MIN = 20000;     // 20s min pump time (accelerated for demo)
+  const SIM_PUMP_MAX = 50000;     // 50s max pump time
 
   // State
   const pumps = [];
