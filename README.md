@@ -1,48 +1,25 @@
-# WWT Custom App
+# WWT Gas
 
-WWT-branded web application for the Palette Edge update demo. Two versions with visible differences demonstrate profile version bumps rolling out across edge clusters.
+Costco fuel station attendant app for the WWT Palette Edge demo. iPad-optimized, touch-first dark mode dashboard. Two versions demonstrate Palette profile version bumps.
 
-## Architecture
+## Versions
 
-- **v1.0.0**: Green badge, "Deployed via Palette Edge"
-- **v2.0.0**: Blue badge, "Updated via Palette Profile Versioning", "What's New" card
+- **v1.0 — Station Monitor**: Manual pump grid. Tap to toggle occupied/available. Stats bar with avg time + cars served.
+- **v2.0 — Smart Station Manager**: Simulated occupancy sensors (auto-detect arrivals/departures), overstay alerts, smart lane recommendations, live analytics panel, toast notifications.
 
 ## Build
 
 ```bash
-# Build both versions
 docker build --build-arg APP_VERSION=v1 -t nctiggy/wwt-custom-app:1.0.0 -f app/Dockerfile .
 docker build --build-arg APP_VERSION=v2 -t nctiggy/wwt-custom-app:2.0.0 -f app/Dockerfile .
-
-# Push to Docker Hub
-docker push nctiggy/wwt-custom-app:1.0.0
-docker push nctiggy/wwt-custom-app:2.0.0
 ```
 
 ## Helm Chart
 
-```bash
-# Lint
-helm lint charts/wwt-custom-app
+Chart lives in [nctiggy/helm-library](https://github.com/nctiggy/helm-library) under `charts/wwt-custom-app/`.
 
-# Template
-helm template wwt-app charts/wwt-custom-app
+## Demo Flow
 
-# Install locally
-helm install wwt-app charts/wwt-custom-app
-
-# From GitHub Pages repo
-helm repo add wwt https://nctiggy.github.io/wwt-custom-app
-helm install wwt-app wwt/wwt-custom-app
-
-# From GHCR OCI
-helm install wwt-app oci://ghcr.io/nctiggy/charts/wwt-custom-app --version 1.0.0
-```
-
-## Demo Workflow
-
-1. Deploy v1.0.0 via Palette add-on profile
-2. Show app at `<node-ip>:30080` — green badge, v1
-3. Bump profile version to 2.0.0 in Terraform
-4. Apply — Palette rolls out update
-5. Refresh — blue badge, v2, "What's New" card
+1. Deploy v1 via Palette add-on profile — attendant manually taps pumps
+2. Bump profile version 1.0.0 → 2.0.0 — Palette rolls out update
+3. App upgrades to Smart Station Manager — sensors auto-detect, analytics panel appears
