@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WWT Edge Application v1.0.0</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="header">
+    <h1>WWT EDGE APPLICATION</h1>
+    <span class="version-badge v1">v1.0.0</span>
+  </div>
+
+  <div class="container">
+    <div class="hero">
+      <h2>WWT Edge Application v1.0.0</h2>
+      <p class="subtitle">Deployed via Palette Edge</p>
+    </div>
+
+    <div class="card">
+      <h3>Deployment Information</h3>
+      <div class="info-row">
+        <span class="info-label">App Version</span>
+        <span class="info-value" id="app-version">1.0.0</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Pod Name</span>
+        <span class="info-value" id="pod-name">-</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Node Name</span>
+        <span class="info-value" id="node-name">-</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Platform</h3>
+      <div class="info-row">
+        <span class="info-label">Orchestrator</span>
+        <span class="info-value">Spectro Cloud Palette</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Distribution</span>
+        <span class="info-value">PXKE (kubeadm)</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Deployment</span>
+        <span class="info-value">Edge Native (Appliance)</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    Powered by <span class="accent">World Wide Technology</span> &amp; Spectro Cloud Palette
+  </div>
+
+  <script>
+    // Populated by Kubernetes Downward API via ConfigMap-injected env vars
+    // The nginx serves static files; pod/node info is injected at render time
+    // via a small init script or left as placeholders for the demo
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('pod')) document.getElementById('pod-name').textContent = params.get('pod');
+    if (params.get('node')) document.getElementById('node-name').textContent = params.get('node');
+  </script>
+</body>
+</html>

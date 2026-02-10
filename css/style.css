@@ -1,0 +1,152 @@
+/* WWT Branding - Corporate Colors */
+:root {
+  --wwt-blue: #0C2340;
+  --wwt-red: #C8102E;
+  --wwt-white: #FFFFFF;
+  --wwt-light-gray: #F4F4F4;
+  --wwt-dark-gray: #333333;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  background-color: var(--wwt-light-gray);
+  color: var(--wwt-dark-gray);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.header {
+  background-color: var(--wwt-blue);
+  color: var(--wwt-white);
+  width: 100%;
+  padding: 1.5rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.header h1 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+.version-badge {
+  font-size: 1.2rem;
+  font-weight: 700;
+  padding: 0.5rem 1.5rem;
+  border-radius: 2rem;
+  display: inline-block;
+}
+
+.version-badge.v1 {
+  background-color: #22c55e;
+  color: #ffffff;
+}
+
+.version-badge.v2 {
+  background-color: #3b82f6;
+  color: #ffffff;
+}
+
+.container {
+  max-width: 900px;
+  width: 100%;
+  padding: 2rem;
+  flex: 1;
+}
+
+.hero {
+  text-align: center;
+  padding: 3rem 2rem;
+  margin-bottom: 2rem;
+}
+
+.hero h2 {
+  font-size: 2.5rem;
+  color: var(--wwt-blue);
+  margin-bottom: 0.5rem;
+}
+
+.hero .subtitle {
+  font-size: 1.2rem;
+  color: #666;
+}
+
+.card {
+  background: var(--wwt-white);
+  border-radius: 0.75rem;
+  padding: 1.5rem 2rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.card h3 {
+  color: var(--wwt-blue);
+  margin-bottom: 0.75rem;
+  font-size: 1.1rem;
+}
+
+.card .info-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--wwt-light-gray);
+}
+
+.card .info-row:last-child {
+  border-bottom: none;
+}
+
+.card .info-label {
+  font-weight: 600;
+  color: #555;
+}
+
+.card .info-value {
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  color: var(--wwt-blue);
+}
+
+.whats-new {
+  border-left: 4px solid #3b82f6;
+}
+
+.whats-new ul {
+  list-style: none;
+  padding: 0;
+}
+
+.whats-new li {
+  padding: 0.4rem 0;
+  padding-left: 1.5rem;
+  position: relative;
+}
+
+.whats-new li::before {
+  content: "\2713";
+  position: absolute;
+  left: 0;
+  color: #3b82f6;
+  font-weight: bold;
+}
+
+.footer {
+  text-align: center;
+  padding: 1.5rem;
+  color: #999;
+  font-size: 0.85rem;
+}
+
+.footer .accent {
+  color: var(--wwt-red);
+  font-weight: 600;
+}
