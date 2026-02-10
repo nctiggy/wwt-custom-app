@@ -2,7 +2,13 @@
    Brand: World Wide Technology
    Font: Roobert (proprietary) → Plus Jakarta Sans (closest Google Fonts match)
    Colors from wwt.com: blue #006dc7, ink #0a0b19, red #e8192c,
-   dark bg #070822, navy #131431, pink #e31c79, orange #fb550e */
+   dark bg #070822, navy #1d1e48, pink #e31c79, orange #fb550e */
+
+@property --gradient-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
 
 :root {
   /* WWT brand palette (exact values from wwt.com CSS vars) */
@@ -40,6 +46,7 @@
   --radius-sm: 0.375rem;
   --radius: 0.5rem;
   --radius-md: 0.75rem;
+  --radius-lg: 1rem;
   --radius-full: 9999px;
 }
 
@@ -62,6 +69,30 @@ body {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  position: relative;
+}
+
+/* ─── Ambient Gradient Background (v2 only) ─── */
+body.has-ambient::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: conic-gradient(
+    from var(--gradient-angle),
+    rgba(0, 109, 199, 0.07),
+    rgba(227, 28, 121, 0.04),
+    rgba(251, 85, 14, 0.03),
+    rgba(22, 47, 180, 0.05),
+    rgba(0, 109, 199, 0.07)
+  );
+  animation: rotate-gradient 25s linear infinite;
+  z-index: 0;
+  pointer-events: none;
+}
+
+body.has-ambient > * {
+  position: relative;
+  z-index: 1;
 }
 
 /* ─── Header ─── */
@@ -194,6 +225,7 @@ body {
 .stat-value.good { color: var(--pump-available); }
 .stat-value.warn { color: var(--pump-warning); }
 .stat-value.bad { color: var(--pump-critical); }
+.stat-value.revenue { color: var(--pump-available); }
 
 .stat-label {
   font-size: 0.6875rem;
@@ -257,7 +289,7 @@ body {
 
 .main.v2-layout { gap: 0; }
 
-/* ─── Pump Section ─── */
+/* ─── Pump Section (v1 grid) ─── */
 .pump-section {
   flex: 1;
   display: flex;
@@ -284,8 +316,6 @@ body {
   width: 100%;
   max-width: 600px;
 }
-
-.v2-layout .pump-grid { max-width: 500px; }
 
 /* ─── Pump Card ─── */
 .pump {
@@ -327,13 +357,6 @@ body {
   border-color: rgba(232, 25, 44, 0.5);
   background: rgba(232, 25, 44, 0.1);
   animation: pulse-critical 1s ease-in-out infinite;
-}
-
-.pump.offline {
-  border-color: rgba(255, 255, 255, 0.05);
-  background: rgba(255, 255, 255, 0.02);
-  opacity: 0.4;
-  cursor: default;
 }
 
 .pump-number {
@@ -381,6 +404,267 @@ body {
   background: var(--wwt-blue);
 }
 
+/* ─── Station Map (v2) ─── */
+.station-map {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0.625rem 1rem;
+  min-width: 0;
+}
+
+.station-container {
+  width: 100%;
+  max-width: 560px;
+  background: rgba(10, 11, 25, 0.5);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-lg);
+  padding: 0.75rem 1rem;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Subtle grid pattern on station */
+.station-container::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+  background-size: 24px 24px;
+  pointer-events: none;
+}
+
+.station-entrance, .station-exit {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.25rem 0;
+}
+
+.enter-label, .exit-label {
+  font-size: 0.5625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--wwt-gray-600);
+}
+
+.queue-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.625rem;
+  color: var(--wwt-gray-500);
+  font-weight: 500;
+}
+
+.queue-cars {
+  display: flex;
+  gap: 3px;
+}
+
+.queue-car-dot {
+  width: 8px;
+  height: 12px;
+  border-radius: 3px 3px 2px 2px;
+  background: var(--wwt-blue);
+  opacity: 0.6;
+  animation: queue-pulse 1.5s ease-in-out infinite;
+}
+
+.queue-car-dot:nth-child(2) { animation-delay: 0.2s; }
+.queue-car-dot:nth-child(3) { animation-delay: 0.4s; }
+.queue-car-dot:nth-child(4) { animation-delay: 0.6s; }
+
+.lane {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 1.25rem;
+  position: relative;
+}
+
+.lane::before {
+  content: '';
+  position: absolute;
+  left: 5%;
+  right: 5%;
+  height: 1px;
+  background: repeating-linear-gradient(
+    90deg,
+    rgba(255,255,255,0.06) 0px,
+    rgba(255,255,255,0.06) 14px,
+    transparent 14px,
+    transparent 24px
+  );
+}
+
+.lane-arrow {
+  font-size: 0.5rem;
+  color: var(--wwt-gray-600);
+  z-index: 1;
+  background: rgba(10, 11, 25, 0.8);
+  padding: 0 0.375rem;
+  letter-spacing: 0.3em;
+}
+
+.pump-island {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background: rgba(29, 30, 72, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius);
+  margin: 0.25rem 0;
+}
+
+/* ─── Pump Bay (station map variant) ─── */
+.pump-bay {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.125rem;
+  padding: 0.375rem 0.25rem;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.pump-bay:active { transform: scale(0.95); }
+
+.pump-bay .bay-number {
+  font-size: 0.5rem;
+  font-weight: 600;
+  color: var(--wwt-gray-500);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.pump-bay .bay-dispenser {
+  width: 18px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--wwt-gray-600);
+  margin: 0.125rem 0;
+}
+
+/* Car shape in bay */
+.pump-bay .car-shape {
+  width: 38px;
+  height: 52px;
+  border-radius: 10px 10px 6px 6px;
+  position: relative;
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pump-bay .car-shape.hidden {
+  opacity: 0;
+  transform: scale(0.3) translateY(-20px);
+}
+
+/* Windshield */
+.pump-bay .car-shape::before {
+  content: '';
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  right: 6px;
+  height: 9px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* Taillights */
+.pump-bay .car-shape::after {
+  content: '';
+  position: absolute;
+  bottom: 5px;
+  left: 7px;
+  right: 7px;
+  height: 3px;
+  border-radius: 1.5px;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.pump-bay .car-timer {
+  font-size: 0.625rem;
+  font-weight: 700;
+  color: white;
+  font-variant-numeric: tabular-nums;
+  z-index: 1;
+  margin-top: 4px;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+}
+
+/* Empty bay indicator */
+.pump-bay .empty-slot {
+  width: 38px;
+  height: 52px;
+  border: 2px dashed rgba(22, 163, 74, 0.25);
+  border-radius: 10px 10px 6px 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.pump-bay .empty-slot .slot-icon {
+  font-size: 1.125rem;
+  opacity: 0.5;
+}
+
+.pump-bay .bay-status-text {
+  font-size: 0.4375rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-top: 0.125rem;
+}
+
+/* Bay status colors */
+.pump-bay.available .bay-status-text { color: var(--pump-available); }
+.pump-bay.occupied .bay-status-text { color: var(--wwt-blue); }
+.pump-bay.warning .bay-status-text { color: var(--pump-warning); }
+.pump-bay.critical .bay-status-text { color: var(--wwt-red); }
+
+.pump-bay.available { background: rgba(22, 163, 74, 0.04); }
+.pump-bay.occupied { background: rgba(0, 109, 199, 0.06); }
+.pump-bay.warning {
+  background: rgba(245, 158, 11, 0.06);
+  animation: pulse-warning 2s ease-in-out infinite;
+}
+.pump-bay.critical {
+  background: rgba(232, 25, 44, 0.08);
+  animation: pulse-critical 1s ease-in-out infinite;
+}
+
+.pump-bay.available .car-shape { background: var(--pump-available); }
+.pump-bay.occupied .car-shape { background: var(--wwt-blue); }
+.pump-bay.warning .car-shape { background: var(--pump-warning); }
+.pump-bay.critical .car-shape { background: var(--wwt-red); }
+
+.pump-bay .sensor-indicator {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--pump-available);
+  animation: sensor-blink 3s ease-in-out infinite;
+}
+
 /* ─── Analytics Panel (v2) ─── */
 .analytics-panel {
   width: 260px;
@@ -420,6 +704,12 @@ body {
   margin-bottom: 0.1875rem;
 }
 
+.metric-card .metric-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem;
+}
+
 .metric-card .metric-value {
   font-size: 1.375rem;
   font-weight: 600;
@@ -435,11 +725,34 @@ body {
 .metric-card .metric-trend {
   font-size: 0.6875rem;
   font-weight: 600;
-  margin-left: 0.375rem;
+  margin-left: 0.25rem;
 }
 
 .metric-trend.up { color: var(--pump-available); }
 .metric-trend.down { color: var(--wwt-red); }
+
+/* ─── Sparkline ─── */
+.sparkline {
+  width: 100%;
+  height: 28px;
+  margin-top: 0.375rem;
+  display: block;
+}
+
+.sparkline-line {
+  fill: none;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.sparkline-area {
+  opacity: 0.1;
+}
+
+.sparkline-dot {
+  transition: all 0.3s ease;
+}
 
 .efficiency-bar {
   height: 5px;
@@ -560,6 +873,10 @@ body {
 .toast.fade-out { animation: toast-out 0.3s ease-in forwards; }
 
 /* ─── Animations ─── */
+@keyframes rotate-gradient {
+  to { --gradient-angle: 360deg; }
+}
+
 @keyframes pulse-warning {
   0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
   50% { box-shadow: 0 0 12px 2px rgba(245, 158, 11, 0.15); }
@@ -575,6 +892,11 @@ body {
   50% { opacity: 0.3; }
 }
 
+@keyframes queue-pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+}
+
 @keyframes toast-in {
   from { opacity: 0; transform: translateX(16px); }
   to { opacity: 1; transform: translateX(0); }
@@ -585,9 +907,20 @@ body {
   to { opacity: 0; transform: translateX(16px); }
 }
 
+@keyframes car-arrive {
+  from { opacity: 0; transform: scale(0.3) translateY(-20px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes car-depart {
+  from { opacity: 1; transform: scale(1) translateY(0); }
+  to { opacity: 0; transform: scale(0.3) translateY(20px); }
+}
+
 /* ─── Responsive ─── */
 @media (max-width: 768px) {
   .pump-grid { grid-template-columns: repeat(2, 1fr); }
+  .pump-island { grid-template-columns: repeat(2, 1fr); }
   .analytics-panel { width: 200px; }
   .stats-bar { gap: 0.75rem; flex-wrap: wrap; }
 }
@@ -596,4 +929,5 @@ body {
   .pump { min-height: 105px; }
   .pump-timer { font-size: 1.1875rem; }
   .pump-status-icon { font-size: 1.75rem; }
+  .pump-bay .car-shape { width: 42px; height: 56px; }
 }
