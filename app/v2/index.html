@@ -10,10 +10,13 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3/dist/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/countup.js@2/dist/countUp.umd.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1/dist/confetti.browser.min.js"></script>
 </head>
 <body class="has-ambient">
 
-  <!-- Toast Container -->
   <div class="toast-container" id="toast-container"></div>
 
   <!-- Header -->
@@ -28,7 +31,7 @@
       <span class="station-id">Station #1247</span>
       <span class="version-pill v2">v2.0</span>
       <div class="notification-badge" id="notif-badge" style="display:none;">
-        <span class="notif-bell">&#x1F514;</span><span class="count" id="notif-count">0</span>
+        &#x1F514;<span class="count" id="notif-count">0</span>
       </div>
     </div>
   </div>
@@ -50,7 +53,7 @@
     <div class="stat">
       <span class="stat-icon">&#x1F697;</span>
       <span class="stat-value" id="cars-served">0</span>
-      <span class="stat-label">Cars Served</span>
+      <span class="stat-label">Served</span>
     </div>
     <div class="stat-divider"></div>
     <div class="stat">
@@ -62,7 +65,7 @@
     <div class="stat">
       <span class="stat-icon">&#x1F4A7;</span>
       <span class="stat-value" id="gallons-display">0</span>
-      <span class="stat-label">Gallons Pumped</span>
+      <span class="stat-label">Gallons</span>
     </div>
     <div class="stat-divider"></div>
     <div class="stat">
@@ -81,12 +84,12 @@
   </div>
 
   <!-- Main: Station Map + Analytics -->
-  <main class="main v2-layout">
+  <div class="main v2-layout">
 
     <!-- Station Map -->
     <div class="station-map">
       <div class="station-container" id="station-container">
-        <!-- Built entirely by JS -->
+        <!-- Built by JS -->
       </div>
     </div>
 
@@ -101,11 +104,7 @@
           <span class="metric-unit">cars/hr</span>
           <span class="metric-trend up" id="throughput-trend"></span>
         </div>
-        <svg class="sparkline" id="sparkline-throughput" viewBox="0 0 120 32" preserveAspectRatio="none">
-          <path class="sparkline-area" d="" fill="#006dc7"/>
-          <polyline class="sparkline-line" points="" stroke="#006dc7"/>
-          <circle class="sparkline-dot" r="2" cx="0" cy="0" fill="#006dc7"/>
-        </svg>
+        <div class="chart-container" id="chart-throughput"></div>
       </div>
 
       <div class="metric-card">
@@ -114,22 +113,12 @@
           <span class="metric-value" id="analytics-avg-time">0:00</span>
           <span class="metric-trend" id="avg-time-trend"></span>
         </div>
-        <svg class="sparkline" id="sparkline-avgtime" viewBox="0 0 120 32" preserveAspectRatio="none">
-          <path class="sparkline-area" d="" fill="#006dc7"/>
-          <polyline class="sparkline-line" points="" stroke="#006dc7"/>
-          <circle class="sparkline-dot" r="2" cx="0" cy="0" fill="#006dc7"/>
-        </svg>
+        <div class="chart-container" id="chart-avgtime"></div>
       </div>
 
       <div class="metric-card">
         <div class="metric-label">Station Efficiency</div>
-        <div class="metric-row">
-          <span class="metric-value" id="efficiency">0</span>
-          <span class="metric-unit">%</span>
-        </div>
-        <div class="efficiency-bar">
-          <div class="fill" id="efficiency-fill" style="width: 0%"></div>
-        </div>
+        <div class="chart-container gauge" id="chart-efficiency"></div>
       </div>
 
       <div class="metric-card">
@@ -137,11 +126,7 @@
         <div class="metric-row">
           <span class="metric-value" id="analytics-revenue">$0</span>
         </div>
-        <svg class="sparkline" id="sparkline-revenue" viewBox="0 0 120 32" preserveAspectRatio="none">
-          <path class="sparkline-area" d="" fill="#16a34a"/>
-          <polyline class="sparkline-line" points="" stroke="#16a34a"/>
-          <circle class="sparkline-dot" r="2" cx="0" cy="0" fill="#16a34a"/>
-        </svg>
+        <div class="chart-container" id="chart-revenue"></div>
       </div>
 
       <div class="metric-card">
@@ -154,13 +139,11 @@
 
       <div class="activity-log">
         <div class="log-title">Activity Feed</div>
-        <div class="log-entries" id="activity-log">
-          <!-- Populated by JS -->
-        </div>
+        <div class="log-entries" id="activity-log"></div>
       </div>
     </div>
 
-  </main>
+  </div>
 
   <!-- Footer -->
   <div class="footer">
@@ -179,18 +162,16 @@
 (function() {
   'use strict';
 
-  // ─── Config ───
+  /* ─── Config ─── */
   var PUMP_COUNT = 8;
-  var WARNING_THRESHOLD = 300;   // 5 min
-  var CRITICAL_THRESHOLD = 420;  // 7 min
+  var WARNING_THRESHOLD = 300;
+  var CRITICAL_THRESHOLD = 420;
+  var SIM_ARRIVAL_MIN = 3000;
+  var SIM_ARRIVAL_MAX = 8000;
+  var SIM_PUMP_MIN = 20000;
+  var SIM_PUMP_MAX = 50000;
 
-  // Simulation: fast for demo
-  var SIM_ARRIVAL_MIN = 3000;    // 3s min between arrivals
-  var SIM_ARRIVAL_MAX = 8000;    // 8s max
-  var SIM_PUMP_MIN = 20000;      // 20s min pump time
-  var SIM_PUMP_MAX = 50000;      // 50s max pump time
-
-  // ─── State ───
+  /* ─── State ─── */
   var pumps = [];
   var carsServed = 0;
   var completedTimes = [];
@@ -199,117 +180,185 @@
   var lastThroughput = 0;
   var lastAvgTime = 0;
   var totalRevenue = 0;
-  var displayedRevenue = 0;
   var totalGallons = 0;
+  var lastRevMilestone = 0;
+  var warningFired = {};
 
-  // Sparkline data (last 20 points each)
-  var sparkData = {
-    throughput: [],
-    avgTime: [],
-    revenue: []
-  };
-  var sparkInterval = null;
+  var sparkData = { throughput: [], avgTime: [], revenue: [] };
 
-  // ─── Init Pumps ───
   for (var i = 1; i <= PUMP_COUNT; i++) {
     pumps.push({
-      id: i,
-      status: 'available',
-      startTime: null,
-      elapsed: 0,
-      scheduledDeparture: null,
-      freeTime: Date.now() - Math.random() * 30000
+      id: i, status: 'available', startTime: null, elapsed: 0,
+      scheduledDeparture: null, freeTime: Date.now() - Math.random() * 30000,
+      _visualStatus: 'available'
     });
   }
 
-  // ─── Build Station Map ───
-  var stationContainer = document.getElementById('station-container');
+  /* ─── CountUp Instances ─── */
+  var CU = countUp.CountUp;
+  var revenueCounter = new CU('revenue-display', 0, { prefix: '$', duration: 0.8, useGrouping: true, useEasing: true });
+  var analyticsRevCounter = new CU('analytics-revenue', 0, { prefix: '$', duration: 0.8, useGrouping: true, useEasing: true });
+  var gallonsCounter = new CU('gallons-display', 0, { duration: 0.8, useGrouping: true });
+  var carsCounter = new CU('cars-served', 0, { duration: 0.5, useGrouping: true });
+  revenueCounter.start();
+  analyticsRevCounter.start();
+  gallonsCounter.start();
+  carsCounter.start();
 
-  function buildStationMap() {
-    stationContainer.innerHTML = '';
-
-    // Entrance
-    var entrance = document.createElement('div');
-    entrance.className = 'station-entrance';
-    entrance.innerHTML =
-      '<span class="enter-label">&#x25B6; Entrance</span>' +
-      '<div class="queue-indicator" id="queue-indicator" style="display:none;">' +
-        '<span class="queue-text" id="queue-text">Waiting</span>' +
-        '<div class="queue-cars" id="queue-cars"></div>' +
-      '</div>';
-    stationContainer.appendChild(entrance);
-
-    // Lane 1
-    var lane1 = document.createElement('div');
-    lane1.className = 'lane';
-    lane1.innerHTML = '<span class="lane-arrow">&#x25BC; &#x25BC; &#x25BC;</span>';
-    stationContainer.appendChild(lane1);
-
-    // Pump Island 1 (Pumps 1-4)
-    var island1 = document.createElement('div');
-    island1.className = 'pump-island';
-    island1.id = 'island-1';
-    for (var p = 1; p <= 4; p++) {
-      island1.appendChild(createPumpBay(p));
-    }
-    stationContainer.appendChild(island1);
-
-    // Lane 2 (middle divider)
-    var lane2 = document.createElement('div');
-    lane2.className = 'lane';
-    lane2.innerHTML = '<span class="lane-arrow">&#x25BC; &#x25BC; &#x25BC;</span>';
-    stationContainer.appendChild(lane2);
-
-    // Pump Island 2 (Pumps 5-8)
-    var island2 = document.createElement('div');
-    island2.className = 'pump-island';
-    island2.id = 'island-2';
-    for (var q = 5; q <= 8; q++) {
-      island2.appendChild(createPumpBay(q));
-    }
-    stationContainer.appendChild(island2);
-
-    // Lane 3
-    var lane3 = document.createElement('div');
-    lane3.className = 'lane';
-    lane3.innerHTML = '<span class="lane-arrow">&#x25BC; &#x25BC; &#x25BC;</span>';
-    stationContainer.appendChild(lane3);
-
-    // Exit
-    var exitDiv = document.createElement('div');
-    exitDiv.className = 'station-exit';
-    exitDiv.innerHTML = '<span class="exit-label">Exit &#x25B6;</span>';
-    stationContainer.appendChild(exitDiv);
+  /* ─── ECharts Setup ─── */
+  function miniOpt(color) {
+    return {
+      animation: true, animationDuration: 400,
+      grid: { top: 4, right: 4, bottom: 4, left: 4 },
+      xAxis: { type: 'category', show: false, boundaryGap: false },
+      yAxis: { type: 'value', show: false },
+      series: [{
+        type: 'line', smooth: 0.4, symbol: 'circle', symbolSize: 5,
+        showSymbol: false,
+        lineStyle: { color: color, width: 2 },
+        areaStyle: {
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: color + '40' },
+            { offset: 1, color: color + '08' }
+          ])
+        },
+        itemStyle: { color: color },
+        data: []
+      }]
+    };
   }
 
-  function createPumpBay(pumpId) {
+  var ecThroughput, ecAvgTime, ecRevenue, ecEfficiency;
+
+  // Init charts after layout settles
+  requestAnimationFrame(function() {
+    ecThroughput = echarts.init(document.getElementById('chart-throughput'));
+    ecAvgTime    = echarts.init(document.getElementById('chart-avgtime'));
+    ecRevenue    = echarts.init(document.getElementById('chart-revenue'));
+    ecEfficiency = echarts.init(document.getElementById('chart-efficiency'));
+
+    ecThroughput.setOption(miniOpt('#006dc7'));
+    ecAvgTime.setOption(miniOpt('#006dc7'));
+    ecRevenue.setOption(miniOpt('#16a34a'));
+
+    ecEfficiency.setOption({
+      animation: true,
+      series: [{
+        type: 'gauge', startAngle: 200, endAngle: -20,
+        min: 0, max: 100, radius: '88%', center: ['50%', '55%'],
+        progress: {
+          show: true, width: 8, roundCap: true,
+          itemStyle: {
+            color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
+              { offset: 0, color: '#006dc7' }, { offset: 1, color: '#16a34a' }
+            ])
+          }
+        },
+        pointer: { show: false },
+        axisLine: { lineStyle: { width: 8, color: [[1, 'rgba(255,255,255,0.06)']] } },
+        axisTick: { show: false }, splitLine: { show: false }, axisLabel: { show: false },
+        title: { show: false },
+        detail: {
+          fontSize: 18, fontWeight: 600, fontFamily: 'Plus Jakarta Sans',
+          color: '#fff', formatter: '{value}%', offsetCenter: [0, '10%']
+        },
+        data: [{ value: 0 }]
+      }]
+    });
+  });
+
+  // Update chart data every 3s
+  setInterval(function() {
+    if (!ecThroughput) return;
+    var elapsed = (Date.now() - sessionStart) / 1000;
+    var tp = elapsed > 0 ? Math.round((carsServed / elapsed) * 3600) : 0;
+    sparkData.throughput.push(tp);
+    if (sparkData.throughput.length > 20) sparkData.throughput.shift();
+
+    var avg = 0;
+    if (completedTimes.length > 0) {
+      avg = completedTimes.reduce(function(a, b) { return a + b; }, 0) / completedTimes.length;
+    }
+    sparkData.avgTime.push(Math.round(avg));
+    if (sparkData.avgTime.length > 20) sparkData.avgTime.shift();
+
+    sparkData.revenue.push(Math.round(totalRevenue));
+    if (sparkData.revenue.length > 20) sparkData.revenue.shift();
+
+    ecThroughput.setOption({ series: [{ data: sparkData.throughput }] });
+    ecAvgTime.setOption({ series: [{ data: sparkData.avgTime }] });
+    ecRevenue.setOption({ series: [{ data: sparkData.revenue }] });
+  }, 3000);
+
+  /* ─── Build Station Map (once) ─── */
+  var stationEl = document.getElementById('station-container');
+
+  function buildStation() {
+    // Entrance
+    var ent = document.createElement('div');
+    ent.className = 'station-entrance';
+    ent.innerHTML =
+      '<span class="enter-label">&#x25B6; Entrance</span>' +
+      '<div class="queue-indicator" id="queue-indicator" style="display:none;">' +
+        '<span id="queue-text">Waiting</span>' +
+        '<div class="queue-cars" id="queue-cars"></div>' +
+      '</div>';
+    stationEl.appendChild(ent);
+
+    // Lane
+    addLane();
+
+    // Island 1
+    var isl1 = document.createElement('div');
+    isl1.className = 'pump-island';
+    for (var p = 1; p <= 4; p++) isl1.appendChild(makeBay(p));
+    stationEl.appendChild(isl1);
+
+    addLane();
+
+    // Island 2
+    var isl2 = document.createElement('div');
+    isl2.className = 'pump-island';
+    for (var q = 5; q <= 8; q++) isl2.appendChild(makeBay(q));
+    stationEl.appendChild(isl2);
+
+    addLane();
+
+    // Exit
+    var ext = document.createElement('div');
+    ext.className = 'station-exit';
+    ext.innerHTML = '<span class="exit-label">Exit &#x25B6;</span>';
+    stationEl.appendChild(ext);
+  }
+
+  function addLane() {
+    var l = document.createElement('div');
+    l.className = 'lane';
+    l.innerHTML = '<span class="lane-arrow">&#x25BC; &#x25BC; &#x25BC;</span>';
+    stationEl.appendChild(l);
+  }
+
+  function makeBay(id) {
     var bay = document.createElement('div');
     bay.className = 'pump-bay available';
-    bay.dataset.bayId = pumpId;
-
+    bay.dataset.bayId = id;
     bay.innerHTML =
-      '<div class="bay-number">Pump ' + pumpId + '</div>' +
+      '<div class="bay-number">Pump ' + id + '</div>' +
       '<div class="bay-dispenser"></div>' +
-      '<div class="empty-slot">' +
-        '<span class="slot-icon">&#x26FD;</span>' +
-      '</div>' +
+      '<div class="empty-slot"><span class="slot-icon">&#x26FD;</span></div>' +
       '<div class="bay-status-text">Available</div>' +
       '<div class="sensor-indicator"></div>';
-
-    bay.addEventListener('click', function() { manualToggle(pumpId); });
+    bay.addEventListener('click', function() { manualToggle(id); });
     return bay;
   }
 
-  buildStationMap();
+  buildStation();
 
-  // ─── Pump Control ───
+  /* ─── Pump Control ─── */
   function manualToggle(id) {
-    var pump = pumps.find(function(p) { return p.id === id; });
-    if (pump.status === 'available') {
-      occupyPump(pump);
-    } else {
-      freePump(pump);
-    }
+    var pump = pumps[id - 1];
+    if (pump.status === 'available') occupyPump(pump);
+    else freePump(pump);
   }
 
   function occupyPump(pump) {
@@ -318,12 +367,22 @@
     pump.elapsed = 0;
     pump.freeTime = null;
 
-    // Schedule auto-departure
-    var duration = SIM_PUMP_MIN + Math.random() * (SIM_PUMP_MAX - SIM_PUMP_MIN);
-    pump.scheduledDeparture = setTimeout(function() { freePump(pump); }, duration);
+    var dur = SIM_PUMP_MIN + Math.random() * (SIM_PUMP_MAX - SIM_PUMP_MIN);
+    pump.scheduledDeparture = setTimeout(function() { freePump(pump); }, dur);
+
+    // Swap empty-slot → car-shape with GSAP
+    var bay = stationEl.querySelector('[data-bay-id="' + pump.id + '"]');
+    var slot = bay.querySelector('.empty-slot');
+    if (slot) slot.style.display = 'none';
+
+    var car = document.createElement('div');
+    car.className = 'car-shape';
+    car.innerHTML = '<span class="car-timer">0:00</span>';
+    bay.insertBefore(car, bay.querySelector('.bay-status-text'));
+
+    gsap.from(car, { scale: 0.2, y: -25, opacity: 0, duration: 0.5, ease: 'back.out(1.7)' });
 
     addLog('\uD83D\uDE97 Pump ' + pump.id + ': vehicle detected');
-    updateQueueVisual();
   }
 
   function freePump(pump) {
@@ -331,183 +390,158 @@
       clearTimeout(pump.scheduledDeparture);
       pump.scheduledDeparture = null;
     }
+
+    var bay = stationEl.querySelector('[data-bay-id="' + pump.id + '"]');
+    var car = bay ? bay.querySelector('.car-shape') : null;
+
     if (pump.elapsed > 0) {
       completedTimes.push(pump.elapsed);
       carsServed++;
 
-      // Revenue + gallons
-      var saleAmount = 25 + Math.random() * 40;  // $25-65
-      var gallons = 8 + Math.random() * 10;       // 8-18 gallons
-      totalRevenue += saleAmount;
-      totalGallons += gallons;
+      var sale = 25 + Math.random() * 40;
+      var gal = 8 + Math.random() * 10;
+      totalRevenue += sale;
+      totalGallons += gal;
 
-      addLog('\u2705 Pump ' + pump.id + ': departed (' + formatTime(pump.elapsed) + ') $' + saleAmount.toFixed(0));
+      revenueCounter.update(Math.round(totalRevenue));
+      analyticsRevCounter.update(Math.round(totalRevenue));
+      gallonsCounter.update(Math.round(totalGallons));
+      carsCounter.update(carsServed);
+
+      checkMilestones();
+
+      addLog('\u2705 Pump ' + pump.id + ': departed (' + formatTime(pump.elapsed) + ') $' + sale.toFixed(0));
       showToast('Pump ' + pump.id + ': now available', 'success');
     }
+
+    // GSAP animate car out, then show empty slot
+    if (car) {
+      gsap.to(car, {
+        scale: 0.2, y: 25, opacity: 0, duration: 0.35, ease: 'power2.in',
+        onComplete: function() {
+          car.remove();
+          var slot = bay.querySelector('.empty-slot');
+          if (slot) {
+            slot.style.display = '';
+            gsap.from(slot, { scale: 0.7, opacity: 0, duration: 0.3, ease: 'power2.out' });
+          }
+        }
+      });
+    }
+
     pump.status = 'available';
     pump.startTime = null;
     pump.elapsed = 0;
     pump.freeTime = Date.now();
-    updateQueueVisual();
+    warningFired[pump.id] = false;
   }
 
-  // ─── Sensor Simulation: Auto-Arrivals ───
-  function scheduleNextArrival() {
+  /* ─── Arrival Simulation ─── */
+  function scheduleNext() {
     var delay = SIM_ARRIVAL_MIN + Math.random() * (SIM_ARRIVAL_MAX - SIM_ARRIVAL_MIN);
     setTimeout(function() {
-      var available = pumps.filter(function(p) { return p.status === 'available'; });
-      if (available.length > 0) {
-        // Pick the pump that has been free the longest
-        available.sort(function(a, b) { return (a.freeTime || 0) - (b.freeTime || 0); });
-        occupyPump(available[0]);
+      var avail = pumps.filter(function(p) { return p.status === 'available'; });
+      if (avail.length > 0) {
+        avail.sort(function(a, b) { return (a.freeTime || 0) - (b.freeTime || 0); });
+        occupyPump(avail[0]);
       }
-      scheduleNextArrival();
+      scheduleNext();
     }, delay);
   }
-  setTimeout(scheduleNextArrival, 2000);
+  setTimeout(scheduleNext, 2000);
 
-  // ─── Helpers ───
-  function formatTime(seconds) {
-    var m = Math.floor(seconds / 60);
-    var s = Math.floor(seconds % 60);
-    return m + ':' + (s < 10 ? '0' : '') + s;
+  /* ─── Helpers ─── */
+  function formatTime(s) {
+    var m = Math.floor(s / 60);
+    var sec = Math.floor(s % 60);
+    return m + ':' + (sec < 10 ? '0' : '') + sec;
   }
 
-  // ─── Toast Notifications ───
+  /* ─── Toast (GSAP-powered) ─── */
   function showToast(message, type) {
-    var container = document.getElementById('toast-container');
-    var toast = document.createElement('div');
-    toast.className = 'toast ' + (type || 'info');
-    var icon = type === 'warning' ? '\u26A0\uFE0F' : type === 'success' ? '\u2705' : '\u2139\uFE0F';
-    toast.innerHTML = '<span>' + icon + '</span> ' + message;
-    container.appendChild(toast);
-    setTimeout(function() {
-      toast.classList.add('fade-out');
-      setTimeout(function() { toast.remove(); }, 300);
-    }, 3000);
-    // Keep max 3 toasts
-    while (container.children.length > 3) {
-      container.firstChild.remove();
-    }
+    var c = document.getElementById('toast-container');
+    var t = document.createElement('div');
+    t.className = 'toast ' + (type || 'info');
+    var ico = type === 'warning' ? '\u26A0\uFE0F' : type === 'success' ? '\u2705' : '\u2139\uFE0F';
+    t.innerHTML = '<span>' + ico + '</span> ' + message;
+    c.appendChild(t);
+
+    gsap.from(t, { x: 80, opacity: 0, duration: 0.35, ease: 'power2.out' });
+    gsap.to(t, {
+      x: 80, opacity: 0, duration: 0.25, delay: 3, ease: 'power2.in',
+      onComplete: function() { t.remove(); }
+    });
+
+    while (c.children.length > 3) c.firstChild.remove();
   }
 
-  // ─── Activity Log ───
-  function addLog(message) {
+  /* ─── Activity Log ─── */
+  function addLog(msg) {
     var log = document.getElementById('activity-log');
     var now = new Date();
-    var time = now.toLocaleTimeString('en-US', {
-      hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
-    });
-    var entry = document.createElement('div');
-    entry.className = 'log-entry';
-    entry.innerHTML = '<span class="log-time">' + time + '</span> ' + message;
-    log.prepend(entry);
-    // Keep max 20 entries
-    while (log.children.length > 20) {
-      log.lastChild.remove();
-    }
+    var time = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+    var e = document.createElement('div');
+    e.className = 'log-entry';
+    e.innerHTML = '<span class="log-time">' + time + '</span> ' + msg;
+    log.prepend(e);
+    gsap.from(e, { x: -20, opacity: 0, duration: 0.3 });
+    while (log.children.length > 20) log.lastChild.remove();
   }
 
-  // ─── Queue Visualization ───
-  function updateQueueVisual() {
-    var available = pumps.filter(function(p) { return p.status === 'available'; });
-    var occupied = PUMP_COUNT - available.length;
-    var indicator = document.getElementById('queue-indicator');
-    var carsDiv = document.getElementById('queue-cars');
-    var textEl = document.getElementById('queue-text');
+  /* ─── Queue Visualization ─── */
+  function updateQueue() {
+    var avail = pumps.filter(function(p) { return p.status === 'available'; }).length;
+    var occ = PUMP_COUNT - avail;
+    var ind = document.getElementById('queue-indicator');
+    var cars = document.getElementById('queue-cars');
+    var txt = document.getElementById('queue-text');
 
-    if (occupied >= PUMP_COUNT || occupied > PUMP_COUNT * 0.5) {
-      var queueCount = Math.floor(Math.random() * 3) + 1;
-      indicator.style.display = '';
-      textEl.textContent = queueCount + ' waiting';
-      carsDiv.innerHTML = '';
-      for (var c = 0; c < queueCount; c++) {
-        var dot = document.createElement('div');
-        dot.className = 'queue-car-dot';
-        carsDiv.appendChild(dot);
+    if (occ >= PUMP_COUNT * 0.6) {
+      var n = avail === 0 ? Math.floor(Math.random() * 3) + 2 : Math.floor(Math.random() * 2) + 1;
+      ind.style.display = '';
+      txt.textContent = n + ' waiting';
+      // Only rebuild dots if count changed
+      if (cars.children.length !== n) {
+        cars.innerHTML = '';
+        for (var c = 0; c < n; c++) {
+          var d = document.createElement('div');
+          d.className = 'queue-car-dot';
+          cars.appendChild(d);
+        }
+        gsap.from('.queue-car-dot', { scale: 0, stagger: 0.08, duration: 0.3, ease: 'back.out(1.5)' });
       }
     } else {
-      indicator.style.display = 'none';
-      carsDiv.innerHTML = '';
+      ind.style.display = 'none';
     }
   }
 
-  // ─── Sparkline Rendering ───
-  function renderSparkline(svgId, data, color) {
-    var svg = document.getElementById(svgId);
-    if (!svg || data.length < 2) return;
-    var w = 120, h = 32, pad = 2;
-    var max = Math.max.apply(null, data) || 1;
-    var min = Math.min.apply(null, data);
-    var range = max - min || 1;
-    var points = data.map(function(v, i) {
-      var x = pad + (i / (data.length - 1)) * (w - pad * 2);
-      var y = pad + (1 - (v - min) / range) * (h - pad * 2);
-      return x.toFixed(1) + ',' + y.toFixed(1);
-    });
-    // Line
-    var line = svg.querySelector('.sparkline-line');
-    line.setAttribute('points', points.join(' '));
-    line.setAttribute('stroke', color);
-    // Area
-    var area = svg.querySelector('.sparkline-area');
-    var areaPath = 'M' + points[0] + ' ' + points.join(' L') + ' L' + (pad + (w - pad * 2)).toFixed(1) + ',' + h + ' L' + pad + ',' + h + ' Z';
-    area.setAttribute('d', areaPath);
-    area.setAttribute('fill', color);
-    // Dot
-    var dot = svg.querySelector('.sparkline-dot');
-    var lastPt = points[points.length - 1].split(',');
-    dot.setAttribute('cx', lastPt[0]);
-    dot.setAttribute('cy', lastPt[1]);
-    dot.setAttribute('fill', color);
-  }
-
-  // Update sparkline data every 3 seconds
-  function updateSparkData() {
-    var elapsed = (Date.now() - sessionStart) / 1000;
-    var throughput = elapsed > 0 ? Math.round((carsServed / elapsed) * 3600) : 0;
-    sparkData.throughput.push(throughput);
-    if (sparkData.throughput.length > 20) sparkData.throughput.shift();
-
-    var avgTime = 0;
-    if (completedTimes.length > 0) {
-      avgTime = completedTimes.reduce(function(a, b) { return a + b; }, 0) / completedTimes.length;
+  /* ─── Milestones (Confetti) ─── */
+  function checkMilestones() {
+    if (carsServed === 5) {
+      confetti({ particleCount: 30, spread: 50, origin: { y: 0.7 }, colors: ['#006dc7', '#e8192c', '#ffffff'] });
+      showToast('\uD83C\uDF89 5 cars served!', 'info');
     }
-    sparkData.avgTime.push(avgTime);
-    if (sparkData.avgTime.length > 20) sparkData.avgTime.shift();
-
-    sparkData.revenue.push(totalRevenue);
-    if (sparkData.revenue.length > 20) sparkData.revenue.shift();
-
-    renderSparkline('sparkline-throughput', sparkData.throughput, '#006dc7');
-    renderSparkline('sparkline-avgtime', sparkData.avgTime, '#006dc7');
-    renderSparkline('sparkline-revenue', sparkData.revenue, '#16a34a');
-  }
-
-  sparkInterval = setInterval(updateSparkData, 3000);
-
-  // ─── Smooth Revenue Counter Animation ───
-  function animateRevenue() {
-    if (Math.abs(displayedRevenue - totalRevenue) < 0.5) {
-      displayedRevenue = totalRevenue;
-    } else {
-      displayedRevenue += (totalRevenue - displayedRevenue) * 0.15;
+    if (carsServed === 10) {
+      confetti({ particleCount: 60, spread: 70, origin: { y: 0.6 }, colors: ['#006dc7', '#e8192c', '#ffffff'] });
+      showToast('\uD83C\uDF89 10 cars served!', 'info');
     }
-    document.getElementById('revenue-display').textContent = '$' + Math.round(displayedRevenue);
-    document.getElementById('analytics-revenue').textContent = '$' + Math.round(displayedRevenue);
-    requestAnimationFrame(animateRevenue);
+    if (carsServed === 25) {
+      confetti({ particleCount: 100, spread: 100, origin: { y: 0.5 }, colors: ['#006dc7', '#e8192c', '#16a34a'] });
+      showToast('\uD83C\uDFC6 25 cars served!', 'info');
+    }
+    var rm = Math.floor(totalRevenue / 500) * 500;
+    if (rm > lastRevMilestone && rm > 0) {
+      lastRevMilestone = rm;
+      confetti({ particleCount: 50, spread: 60, origin: { y: 0.5 }, colors: ['#006dc7', '#e8192c', '#ffffff'] });
+      showToast('\uD83D\uDCB0 $' + rm + ' revenue!', 'info');
+    }
   }
-  requestAnimationFrame(animateRevenue);
 
-  // ─── Warning Tracking ───
-  var warningFired = {};
-
-  // ─── Render Loop (every 1s) ───
+  /* ─── Render Loop (1s) — only update text, never rebuild DOM ─── */
   function render() {
     alertCount = 0;
 
     pumps.forEach(function(pump) {
-      // Update elapsed
       if (pump.status !== 'available' && pump.startTime) {
         pump.elapsed = (Date.now() - pump.startTime) / 1000;
 
@@ -515,7 +549,7 @@
           pump.status = 'critical';
           alertCount++;
         } else if (pump.elapsed >= WARNING_THRESHOLD) {
-          if (pump.status !== 'warning' && !warningFired[pump.id]) {
+          if (!warningFired[pump.id]) {
             showToast('Pump ' + pump.id + ': overstay ' + formatTime(pump.elapsed), 'warning');
             addLog('\u26A0\uFE0F Pump ' + pump.id + ': overstay alert');
             warningFired[pump.id] = true;
@@ -526,68 +560,38 @@
           pump.status = 'occupied';
           warningFired[pump.id] = false;
         }
-      } else {
-        warningFired[pump.id] = false;
       }
 
-      // Update bay in station map
-      var bay = stationContainer.querySelector('[data-bay-id="' + pump.id + '"]');
+      // Update bay classes + text (no DOM rebuild)
+      var bay = stationEl.querySelector('[data-bay-id="' + pump.id + '"]');
       if (!bay) return;
 
-      bay.className = 'pump-bay ' + pump.status;
+      if (bay.className !== 'pump-bay ' + pump.status) {
+        bay.className = 'pump-bay ' + pump.status;
+      }
 
-      // Rebuild inner content based on status
-      var bayNumber = bay.querySelector('.bay-number');
-      var dispenser = bay.querySelector('.bay-dispenser');
       var statusText = bay.querySelector('.bay-status-text');
-      var sensorInd = bay.querySelector('.sensor-indicator');
-
-      // Remove existing car-shape or empty-slot
-      var existing = bay.querySelector('.car-shape');
-      var existingEmpty = bay.querySelector('.empty-slot');
+      var carTimer = bay.querySelector('.car-timer');
 
       if (pump.status === 'available') {
-        // Show empty slot
-        if (existing) existing.remove();
-        if (!existingEmpty) {
-          var emptySlot = document.createElement('div');
-          emptySlot.className = 'empty-slot';
-          emptySlot.innerHTML = '<span class="slot-icon">&#x26FD;</span>';
-          bay.insertBefore(emptySlot, statusText);
-        }
-        statusText.textContent = 'Available';
+        if (statusText.textContent !== 'Available') statusText.textContent = 'Available';
       } else {
-        // Show car shape
-        if (existingEmpty) existingEmpty.remove();
-        if (!existing) {
-          existing = document.createElement('div');
-          existing.className = 'car-shape';
-          var timerSpan = document.createElement('span');
-          timerSpan.className = 'car-timer';
-          existing.appendChild(timerSpan);
-          bay.insertBefore(existing, statusText);
-        }
-        var carTimer = existing.querySelector('.car-timer');
-        carTimer.textContent = formatTime(pump.elapsed);
-
+        if (carTimer) carTimer.textContent = formatTime(pump.elapsed);
         if (pump.status === 'occupied') {
-          statusText.textContent = 'Pumping';
+          if (statusText.textContent !== 'Pumping') statusText.textContent = 'Pumping';
         } else if (pump.status === 'warning') {
-          statusText.textContent = 'Overstay';
+          if (statusText.textContent !== 'Overstay') statusText.textContent = 'Overstay';
         } else if (pump.status === 'critical') {
-          statusText.textContent = 'ALERT';
+          if (statusText.textContent !== 'ALERT') statusText.textContent = 'ALERT';
         }
       }
     });
 
-    // ─── Stats Bar Updates ───
-    var available = pumps.filter(function(p) { return p.status === 'available'; });
+    // Stats
+    var avail = pumps.filter(function(p) { return p.status === 'available'; });
     var availEl = document.getElementById('available-count');
-    availEl.textContent = available.length;
-    availEl.className = 'stat-value ' + (available.length > 4 ? 'good' : available.length > 2 ? 'warn' : 'bad');
-
-    document.getElementById('cars-served').textContent = carsServed;
-    document.getElementById('gallons-display').textContent = Math.round(totalGallons);
+    availEl.textContent = avail.length;
+    availEl.className = 'stat-value ' + (avail.length > 4 ? 'good' : avail.length > 2 ? 'warn' : 'bad');
 
     // Avg time
     var avgTime = 0;
@@ -597,16 +601,10 @@
       document.getElementById('analytics-avg-time').textContent = formatTime(avgTime);
     }
 
-    // Avg time trend
-    var avgTrendEl = document.getElementById('avg-time-trend');
+    var avgTrend = document.getElementById('avg-time-trend');
     if (lastAvgTime > 0 && avgTime > 0) {
-      if (avgTime < lastAvgTime) {
-        avgTrendEl.textContent = '\u2193';
-        avgTrendEl.className = 'metric-trend up';
-      } else if (avgTime > lastAvgTime) {
-        avgTrendEl.textContent = '\u2191';
-        avgTrendEl.className = 'metric-trend down';
-      }
+      if (avgTime < lastAvgTime) { avgTrend.textContent = '\u2193'; avgTrend.className = 'metric-trend up'; }
+      else if (avgTime > lastAvgTime) { avgTrend.textContent = '\u2191'; avgTrend.className = 'metric-trend down'; }
     }
     lastAvgTime = avgTime;
 
@@ -615,57 +613,46 @@
     var throughput = elapsed > 0 ? Math.round((carsServed / elapsed) * 3600) : 0;
     document.getElementById('throughput').textContent = throughput;
     var tpTrend = document.getElementById('throughput-trend');
-    if (throughput > lastThroughput) {
-      tpTrend.textContent = '\u2191';
-      tpTrend.className = 'metric-trend up';
-    } else if (throughput < lastThroughput) {
-      tpTrend.textContent = '\u2193';
-      tpTrend.className = 'metric-trend down';
-    }
+    if (throughput > lastThroughput) { tpTrend.textContent = '\u2191'; tpTrend.className = 'metric-trend up'; }
+    else if (throughput < lastThroughput) { tpTrend.textContent = '\u2193'; tpTrend.className = 'metric-trend down'; }
     lastThroughput = throughput;
 
-    // Efficiency (% of pumps in use)
-    var occupied = PUMP_COUNT - available.length;
-    var efficiency = Math.round((occupied / PUMP_COUNT) * 100);
-    document.getElementById('efficiency').textContent = efficiency;
-    document.getElementById('efficiency-fill').style.width = efficiency + '%';
+    // Efficiency gauge
+    var occ = PUMP_COUNT - avail.length;
+    var eff = Math.round((occ / PUMP_COUNT) * 100);
+    if (ecEfficiency) ecEfficiency.setOption({ series: [{ data: [{ value: eff }] }] });
 
-    // Alerts + notification badge
+    // Alerts + badge
     document.getElementById('alert-count').textContent = alertCount;
     var badge = document.getElementById('notif-badge');
     var countEl = document.getElementById('notif-count');
-    if (alertCount > 0) {
-      badge.style.display = '';
-      countEl.textContent = alertCount;
-    } else {
-      badge.style.display = 'none';
-    }
+    if (alertCount > 0) { badge.style.display = ''; countEl.textContent = alertCount; }
+    else { badge.style.display = 'none'; }
 
-    // Recommendation: longest-free pump
-    if (available.length > 0) {
-      var sorted = available.slice().sort(function(a, b) { return (a.freeTime || 0) - (b.freeTime || 0); });
+    // Recommendation
+    if (avail.length > 0) {
+      var sorted = avail.slice().sort(function(a, b) { return (a.freeTime || 0) - (b.freeTime || 0); });
       var rec = sorted[0];
-      var freeFor = rec.freeTime ? (Date.now() - rec.freeTime) / 1000 : 0;
-      var recPumpEl = document.getElementById('rec-pump');
-      recPumpEl.textContent = 'Pump ' + rec.id;
-      recPumpEl.style.color = '';
-      document.getElementById('rec-detail').textContent = freeFor > 0 ? '(free ' + formatTime(freeFor) + ')' : '';
+      var free = rec.freeTime ? (Date.now() - rec.freeTime) / 1000 : 0;
+      var rp = document.getElementById('rec-pump');
+      rp.textContent = 'Pump ' + rec.id;
+      rp.style.color = '';
+      document.getElementById('rec-detail').textContent = free > 0 ? '(free ' + formatTime(free) + ')' : '';
     } else {
-      var recPumpEl2 = document.getElementById('rec-pump');
-      recPumpEl2.textContent = 'All pumps occupied';
-      recPumpEl2.style.color = 'var(--pump-warning)';
+      var rp2 = document.getElementById('rec-pump');
+      rp2.textContent = 'All pumps occupied';
+      rp2.style.color = 'var(--pump-warning)';
       document.getElementById('rec-detail').textContent = '';
     }
 
-    // Queue update
-    updateQueueVisual();
+    updateQueue();
   }
 
   setInterval(render, 1000);
   render();
   addLog('\uD83D\uDCE1 Occupancy sensors initialized');
   addLog('\uD83E\uDD16 AI recommendations active');
-  addLog('\uD83D\uDCC8 Sparkline analytics online');
+  addLog('\uD83D\uDCC8 Analytics engine online');
 })();
 </script>
 </body>
